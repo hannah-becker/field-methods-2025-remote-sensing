@@ -1,7 +1,8 @@
 # requirements ----
-library(hsdar)
+library(hsdar) #install from source
 library(tidyverse)
 library(ggplot2)
+library(asdreader)
 
 # data ----
 list <- list.files("./data/hyperspectral", pattern = "*.asd", full.names = TRUE)
