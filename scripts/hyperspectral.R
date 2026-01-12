@@ -3,6 +3,7 @@ library(hsdar) #install from source
 library(tidyverse)
 library(ggplot2)
 library(asdreader)
+library(gridExtra)
 
 # data ----
 list <- list.files("./data/hyperspectral", pattern = "*.asd", full.names = TRUE)
@@ -76,9 +77,9 @@ spectra$wavelength <- as.numeric(spectra$wavelength)
 spectra$plot <- as.factor(spectra$plot)
 spectra$reflectance <- spectra$reflectance * 100
 
-write.csv(data, "./data/hyperspectral_combined.csv")
+#write.csv(data, "./data/hyperspectral_combined.csv")
 
-#for plot 2
+#for plot 2 (wet)
 subset(spectra, species == "Calluna_vulgaris" & plot == "2") %>% 
   ggplot(., aes(x = wavelength, y = reflectance))+
   geom_line(stat = "summary", fun = "mean", color = "darkgreen")+ #plots mean of all files
@@ -86,10 +87,23 @@ subset(spectra, species == "Calluna_vulgaris" & plot == "2") %>%
   ylab("reflectance [%]")+
   xlab("wavelength [nm]")+
   scale_x_continuous(n.breaks = 10)+
-  scale_y_continuous(limits = c(NA, 40)) 
+  scale_y_continuous(limits = c(0, 40)) 
 ggsave("Calluna_mean_plot2.png", path = "./visualizations", height = 700, width = 1500, units = "px")
 
-#for plot 1
+#no mean
+subset(spectra, species == "Calluna_vulgaris" & plot == "2") %>% 
+  ggplot(., aes(x = wavelength, y = reflectance))+
+  geom_line(color = "darkgreen")+ #plots mean of all files
+  theme_classic()+
+  ylab("reflectance [%]")+
+  xlab("wavelength [nm]")+
+  scale_x_continuous(n.breaks = 10)+
+  scale_y_continuous(limits = c(0, 40)) 
+ggsave("Calluna_plot2.png", path = "./visualizations", height = 700, width = 1500, units = "px")
+
+
+
+#for plot 1 (dry)
 subset(spectra, species == "Calluna_vulgaris" & plot == "1") %>% 
   ggplot(., aes(x = wavelength, y = reflectance))+
   geom_line(stat = "summary", fun = "mean", color = "orange")+
@@ -97,8 +111,21 @@ subset(spectra, species == "Calluna_vulgaris" & plot == "1") %>%
   ylab("reflectance [%]")+
   xlab("wavelength [nm]")+
   scale_x_continuous(n.breaks = 10)+
-  scale_y_continuous(limits = c(NA, 40))
+  scale_y_continuous(limits = c(0, 40))
 ggsave("Calluna_mean_plot1.png", path = "./visualizations", height = 700, width = 1500, units = "px")
+
+#no mean
+subset(spectra, species == "Calluna_vulgaris" & plot == "1") %>% 
+  ggplot(., aes(x = wavelength, y = reflectance))+
+  geom_line(color = "orange")+
+  theme_classic()+
+  ylab("reflectance [%]")+
+  xlab("wavelength [nm]")+
+  scale_x_continuous(n.breaks = 10)+
+  scale_y_continuous(limits = c(0, 40))
+ggsave("Calluna_plot1.png", path = "./visualizations", height = 700, width = 1500, units = "px")
+
+
 
 #visualize both together
 #set colors
@@ -114,5 +141,53 @@ subset(spectra, species == "Calluna_vulgaris") %>%
   ylab("reflectance [%]")+
   xlab("wavelength [nm]")+
   scale_x_continuous(n.breaks = 10)+
-  scale_y_continuous(limits = c(NA, 40))
+  scale_y_continuous(limits = c(0, 40))
 ggsave("Calluna_mean_comparison.png", path = "./visualizations", height = 700, width = 1500, units = "px")
+
+#no mean
+subset(spectra, species == "Calluna_vulgaris") %>%
+  ggplot(., aes(x = wavelength, y = reflectance, color = plot))+
+  geom_line()+
+  theme_classic()+
+  scale_color_manual(values = cols, labels = c("dry", "wet"))+
+  theme(legend.position = c(0.9, 0.8), legend.key.size = unit(1, "char"))+
+  ylab("reflectance [%]")+
+  xlab("wavelength [nm]")+
+  scale_x_continuous(n.breaks = 10)+
+  scale_y_continuous(limits = c(0, 40))
+ggsave("Calluna_comparison.png", path = "./visualizations", height = 700, width = 1500, units = "px")
+
+
+#combined plots viz
+
+plot_mean <- subset(spectra, species == "Calluna_vulgaris") %>%
+  ggplot(., aes(x = wavelength, y = reflectance, color = plot))+
+  geom_line(stat = "summary", fun = "mean")+
+  theme_classic()+
+  scale_color_manual(values = cols, labels = c("dry", "wet"))+
+  theme(legend.position = c(0.9, 0.8), legend.key.size = unit(1, "char"))+
+  ylab("reflectance [%]")+
+  xlab("wavelength [nm]")+
+  scale_x_continuous(n.breaks = 10)+
+  scale_y_continuous(limits = c(0, 40))
+
+plot_wet <- subset(spectra, species == "Calluna_vulgaris" & plot == "2") %>% 
+  ggplot(., aes(x = wavelength, y = reflectance))+
+  geom_line(color = "darkgreen")+ #plots mean of all files
+  theme_classic()+
+  ylab("reflectance [%]")+
+  xlab("wavelength [nm]")+
+  scale_x_continuous(n.breaks = 10)+
+  scale_y_continuous(limits = c(0, 40)) 
+
+plot_dry <- subset(spectra, species == "Calluna_vulgaris" & plot == "1") %>% 
+  ggplot(., aes(x = wavelength, y = reflectance))+
+  geom_line(color = "orange")+
+  theme_classic()+
+  ylab("reflectance [%]")+
+  xlab("wavelength [nm]")+
+  scale_x_continuous(n.breaks = 10)+
+  scale_y_continuous(limits = c(0, 40))
+
+grob <- arrangeGrob(plot_mean, plot_dry, plot_wet, nrow = 3)
+ggsave("Calluna_comparison_grid.png", path = "./visualizations", grob, height = 2100, width = 1500, units = "px")
